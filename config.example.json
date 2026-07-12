@@ -6,7 +6,8 @@
       "enabled": true,
       "webhook": "",
       "when": "always",
-      "msgtype": "markdown"
+      "msgtype": "text" 
+      # 如只需在企业微信中推送，可将此条由text改为markdown
     }
   },
   "sites": [
