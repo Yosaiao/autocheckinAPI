@@ -1,0 +1,45 @@
+{
+  "timeout": 30,
+  "proxy": "",
+  "notify": {
+    "wecom_bot": {
+      "enabled": true,
+      "webhook": "",
+      "when": "always",
+      "msgtype": "markdown"
+    }
+  },
+  "sites": [
+    {
+      "name": "nloln",
+      "base_url": "https://api.nloln.cn",
+      "mode": "checkin",
+      "enabled": true,
+      "username": "",
+      "password": "",
+      "user_id": "",
+      "session_cookie": "",
+      "access_token": "",
+      "quota_unit": 500000,
+      "checkin_path": "/api/user/checkin",
+      "login_path": "/api/user/login",
+      "self_path": "/api/user/self",
+      "user_header": "New-Api-User"
+    },
+    {
+      "name": "anyrouter",
+      "base_url": "https://anyrouter.top",
+      "mode": "login_only",
+      "enabled": true,
+      "username": "",
+      "password": "",
+      "user_id": "",
+      "session_cookie": "",
+      "access_token": "",
+      "quota_unit": 500000,
+      "login_path": "/api/user/login",
+      "self_path": "/api/user/self",
+      "user_header": "New-Api-User"
+    }
+  ]
+}

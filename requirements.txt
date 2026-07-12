@@ -1,0 +1,2 @@
+﻿# Optional dependency. Without it, the script falls back to urllib.
+requests>=2.28.0
