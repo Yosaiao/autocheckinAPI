@@ -1,6 +1,7 @@
 # 多站点自动签到 / 登录保活
 
 支持 New API 风格站点，签到/登录后通过**企业微信群机器人 Webhook**推送结果。
+自用站点：https://anyrouter.top、https://api.nloln.cn
 
 ## 企业微信群机器人（推荐）
 
