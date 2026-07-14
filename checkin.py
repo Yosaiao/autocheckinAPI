@@ -80,6 +80,9 @@ def normalize_sites(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 site.setdefault(k, v)
             site.setdefault("enabled", True)
             site.setdefault("mode", "checkin")
+            # anyrouter-checkin style: "session" is an alias of session_cookie
+            if not str(site.get("session_cookie") or "").strip() and site.get("session"):
+                site["session_cookie"] = site.get("session")
             if not str(site.get("name") or "").strip():
                 site["name"] = site.get("base_url") or "site-{0}".format(i + 1)
             sites.append(site)
@@ -209,6 +212,8 @@ def is_waf_challenge(data: Any) -> bool:
     if not isinstance(data, str):
         return False
     low = data.lower()
+    if "<script>" in low and "arg1" in data:
+        return True
     return (
         "acw_sc__v2" in low
         or "var arg1=" in data
@@ -332,9 +337,10 @@ class HttpClient:
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) "
-                "Chrome/120.0.0.0 Safari/537.36"
+                "Chrome/126.0.0.0 Safari/537.36"
             ),
             "Accept": "application/json, text/plain, */*",
+            "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
             "Content-Type": "application/json",
         }
         if default_headers:
@@ -593,7 +599,12 @@ class SiteClient:
             logging.warning("[%s] login ok but user_id missing", self.name)
 
     def apply_static_auth(self) -> None:
-        cookies = parse_session_cookie(str(self.cfg.get("session_cookie") or ""))
+        raw_cookie = str(
+            self.cfg.get("session_cookie")
+            or self.cfg.get("session")
+            or ""
+        )
+        cookies = parse_session_cookie(raw_cookie)
         if cookies:
             self.http.set_cookies(cookies)
             logging.info("[%s] loaded cookies: %s", self.name, ", ".join(cookies.keys()))
@@ -626,7 +637,7 @@ class SiteClient:
         method: str,
         url: str,
         json_body: Optional[Dict[str, Any]] = None,
-        retries: int = 2,
+        retries: int = 3,
     ) -> Tuple[int, Dict[str, str], Any]:
         status, headers, data = self.http.request(method, url, json_body=json_body)
         attempt = 0
@@ -639,7 +650,11 @@ class SiteClient:
         return status, headers, data
 
     def ensure_auth(self) -> None:
-        cookie = str(self.cfg.get("session_cookie") or "").strip()
+        cookie = str(
+            self.cfg.get("session_cookie")
+            or self.cfg.get("session")
+            or ""
+        ).strip()
         token = str(self.cfg.get("access_token") or "").strip()
         username = str(self.cfg.get("username") or "").strip()
         password = str(self.cfg.get("password") or "")
@@ -703,8 +718,18 @@ class SiteClient:
     def checkin(self) -> Tuple[bool, str, Any]:
         path = str(self.cfg.get("checkin_path") or "/api/user/checkin")
         url = join_url(self.base_url, path)
+        # anyrouter-checkin posts empty body to /api/user/sign_in;
+        # classic New-API (e.g. nloln) keeps JSON {}.
+        empty_body = self.cfg.get("checkin_empty_body")
+        if empty_body is None:
+            empty_body = path.rstrip("/").endswith("sign_in")
+        body: Optional[Dict[str, Any]]
+        if empty_body:
+            body = None
+        else:
+            body = {}
         logging.info("[%s] checkin POST %s", self.name, url)
-        status, _, data = self.request_json("POST", url, json_body={})
+        status, _, data = self.request_json("POST", url, json_body=body)
         logging.debug("[%s] checkin status=%s body=%s", self.name, status, summarize_body(data))
         if is_waf_challenge(data) or looks_like_html(data):
             return False, summarize_body(data), data
