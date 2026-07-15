@@ -6,7 +6,7 @@
       "enabled": true,
       "webhook": "",
       "when": "always",
-      "msgtype": "text" 
+      "msgtype": "markdown"
     }
   },
   "sites": [
@@ -29,7 +29,7 @@
     {
       "name": "anyrouter",
       "base_url": "https://anyrouter.top",
-      "mode": "login_only",
+      "mode": "checkin",
       "enabled": true,
       "username": "",
       "password": "",
@@ -37,6 +37,7 @@
       "session_cookie": "",
       "access_token": "",
       "quota_unit": 500000,
+      "checkin_path": "/api/user/sign_in",
       "login_path": "/api/user/login",
       "self_path": "/api/user/self",
       "user_header": "New-Api-User"

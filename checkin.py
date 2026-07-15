@@ -36,6 +36,22 @@ DEFAULT_PATHS = {
     "user_header": "New-Api-User",
 }
 QUOTA_UNIT = 500000
+ANYROUTER_CHECKIN_PATH = "/api/user/sign_in"
+
+
+def is_anyrouter_site(site: Dict[str, Any]) -> bool:
+    name = str(site.get("name") or "").strip().lower()
+    base = str(site.get("base_url") or "").strip().lower()
+    return "anyrouter" in name or "anyrouter.top" in base
+
+
+def apply_anyrouter_defaults(site: Dict[str, Any]) -> None:
+    """anyrouter uses /api/user/sign_in, not classic New-API /api/user/checkin."""
+    if not is_anyrouter_site(site):
+        return
+    path = str(site.get("checkin_path") or "").strip()
+    if not path or path.rstrip("/") == "/api/user/checkin":
+        site["checkin_path"] = ANYROUTER_CHECKIN_PATH
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -85,6 +101,7 @@ def normalize_sites(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
                 site["session_cookie"] = site.get("session")
             if not str(site.get("name") or "").strip():
                 site["name"] = site.get("base_url") or "site-{0}".format(i + 1)
+            apply_anyrouter_defaults(site)
             sites.append(site)
     else:
         site = {
@@ -108,6 +125,9 @@ def normalize_sites(cfg: Dict[str, Any]) -> List[Dict[str, Any]]:
         site["enabled"] = cfg.get("enabled", True)
         for k, v in DEFAULT_PATHS.items():
             site.setdefault(k, v)
+        if not str(site.get("session_cookie") or "").strip() and site.get("session"):
+            site["session_cookie"] = site.get("session")
+        apply_anyrouter_defaults(site)
         sites.append(site)
 
     if len(sites) == 1:
